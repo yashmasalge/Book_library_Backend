@@ -75,7 +75,12 @@ app.get("/author-id/:id", (req, res) => {
 
 // http://localhost:3000/author-isbn/12345Two
 app.get("/author-isbn/:isbn", (req, res) => {
-   
+    const {isbn} = req.params;
+    const getSpecificAuthor = db.authors.filter((author) => author.books.includes(isbn));
+    if(getSpecificAuthor.length===0) {
+        return res.json({"error": `No Author found for the id of ${isbn}`});
+    }
+    return res.json(getSpecificAuthor);
 });
 
 // http://localhost:3000/publications
@@ -86,7 +91,12 @@ app.get("/publications", (req, res) => {
 
 // http://localhost:3000/publication-isbn/12345Two
 app.get("/publication-isbn/:isbn", (req, res) => {
-   
+    const {isbn} = req.params;
+    const getISBNPublications = db.publications.filter((publication) => publication.books.includes(isbn));
+    if(getISBNPublications.length===0) {
+        return res.json({"error": `No Author found for the id of ${isbn}`});
+    }
+    return res.json(getISBNPublications);
 });
 
 // Posting a new book
@@ -109,6 +119,129 @@ app.post("/addauthor",(req,res) => {
     db.authors.push(req.body);
     return res.json(db.authors)
 })
+
+
+//PUT
+
+
+
+// change details of book 
+// http://localhost:3000/updateBook/:isbn
+app.put("/updateBook/:isbn",(req,res) => {
+const {isbn} = req.params;
+db.books.forEach((book) => {
+    if(book.ISBN === isbn){
+        console.log({...book,...req.body})
+        return {...book,...req.body};
+    }
+    return book;
+})
+return res.json(db.books)
+});
+
+// change details of Author 
+// http://localhost:3000/updateAuthor/1
+app.put("/updateAuthor/:id",(req,res) => {
+    let {id} = req.params;
+    id = Number(id)
+    db.authors.forEach((author) => {
+        if(author.id == id){
+            console.log({...author,...req.body})
+            return {...author,...req.body};
+        }
+        
+        return author;
+    })
+    return res.json(db.authors)
+    });
+
+
+// change details of Publication
+// http://localhost:3000/updatePublication/1
+app.put("/updatePublication/:id",(req,res) => {
+    let {id} = req.params;
+    id = Number(id)
+    db.publications.forEach((Publication) => {
+        if(Publication.id == id){
+            console.log({...Publication,...req.body})
+            return {...Publication,...req.body};
+        }
+        
+        return Publication;
+    })
+    return res.json(db.publications)
+    });
+
+
+
+// DELETE
+
+// http://localhost:3000/book-delete/12345ONE
+app.delete("/book-delete/:isbn", (req, res) => {
+    // console.log(req.params);
+    const {isbn} = req.params;
+    const filteredBooks = db.books.filter((book) => book.ISBN!==isbn);
+    // console.log(filteredBooks);
+    db.books = filteredBooks;
+    return res.json(db.books);
+});
+
+// http://localhost:3000/book-author-delete/12345ONE/1
+app.delete("/book-author-delete/:isbn/:id", (req, res) => {
+    // console.log(req.params);
+    let {isbn, id} = req.params;
+    id = Number(id);
+    db.books.forEach((book) => {
+        if(book.ISBN === isbn) {
+            if(!book.authors.includes(id)) {
+                return;
+            }
+            book.authors = book.authors.filter((author) => author!==id);
+            return book;
+        }
+        return book;
+    })
+    return res.json(db.books);
+});
+
+// http://localhost:3000/author-book-delete/1/12345ONE
+app.delete("/author-book-delete/:id/:isbn", (req, res) => {
+    let {id, isbn} = req.params;
+    id = Number(id);
+    db.authors.forEach((author) => {
+        if(author.id == id) {
+            if(!author.books.includes(isbn)) {
+                return;
+            }
+            author.books = author.books.filter((author) => author!==isbn);
+            console.log(author)
+            return author;
+        }
+        console.log(author);
+        return author;
+    })
+    return res.json(db.authors);
+});
+
+// http://localhost:3000/author-delete/1
+app.delete("/author-delete/:id", (req, res) => {
+    let {id} = req.params;
+    id = Number(id)
+    const filteredBooks = db.authors.filter((author) => author.id!==id);
+    //  console.log(filteredBooks);
+    db.authors = filteredBooks;
+    return res.json(db.authors);
+});
+
+// http://localhost:3000/publication-delete/1
+app.delete("/publication-delete/:id", (req, res) => {
+    let {id} = req.params;
+    id = Number(id);
+    const filterPublications = db.publications.filter((public) => public.id !== id)
+    db.publications = filterPublications
+    return res.json(db.publications)
+});
+
 
 app.listen(3000, () => {
     console.log("MY EXPRESS APP IS RUNNING.....")
