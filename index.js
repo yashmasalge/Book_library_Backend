@@ -1,11 +1,20 @@
 // MAIN BACKEND FILE
-
+const { json } = require('express');
 const db = require("./database/index");
+require("dotenv").config();
 // console.log(db.books);
 // console.log(db.authors);
 // console.log(db.publications);
 
 const express = require("express");
+
+//mongoose connection
+const connectDB = require("./connection.js");
+
+//mongoose model
+const {bookModel, authorModel, publicationModel} = require("./library");
+// const authorModel = require("./author");
+// const publicationModel = require("./publication");
 
 const app = express();
 
@@ -19,23 +28,36 @@ app.get("/", (req, res) => {
 });
 
 // http://localhost:3000/books
-app.get("/books", (req, res) => {
-    const getAllBooks = db.books;
-    return res.json(getAllBooks);
+app.get("/books",async (req, res) => {
+     try{
+        const getAllBooks = await bookModel.find();
+        if(getAllBooks == null){
+            return res.json("Error");
+        }
+        return res.json({getAllBooks});
+     }
+     catch(e){
+         return res.status(500).json({e : e.Message});
+     }
 });
 
 // http://localhost:3000/book-isbn/12345Two
-app.get("/book-isbn/:isbn", (req, res) => {
-    // console.log(req.params);
+app.get("/book-isbn/:isbn",async (req, res) => {
+    try{
+        // console.log(req.params);
     const {isbn} = req.params;
-    // console.log(isbn);
-    const getSpecificBook = db.books.filter((book) => book.ISBN === isbn);
-    // console.log(getSpecificBook);
+    console.log(isbn);
+    const getSpecificBook = await bookModel.findOne({ISBN : isbn})
+    console.log(getSpecificBook);
     // console.log(getSpecificBook.length);
-    if(getSpecificBook.length===0) {
-        return res.json({"error": `No Book found for the ISBN of ${isbn}`});
+    if(!getSpecificBook){
+        return res.json({Message : "No data Found"});
     }
-    return res.json(getSpecificBook[0]);
+    return res.json({getSpecificBook});
+    }
+    catch(e){
+        return res.status(500).json({e : e.Message});
+    }
 });
 
 // http://localhost:3000/book-category/programming
@@ -100,25 +122,44 @@ app.get("/publication-isbn/:isbn", (req, res) => {
 });
 
 // Posting a new book
-app.post("/addBook",(req,res) => {
-    console.log(req.body);
-    db.books.push(req.body);
-    return res.json(db.books)
-})
+app.post("/addBook",async (req,res) => {
+   try{
+       console.log(req.body);
+    const {newBook} = req.body;
+    console.log(newBook);
+    await bookModel.create(newBook);
+    return res.json({newBook});
+   }
+   catch(error){
+    return res.status(500).json({error : error.Message});
+   }
+});
 
-// Posting new publication
-app.post("/addpublications",(req,res) => {
-    console.log(req.body);
-    db.publications.push(req.body);
-    return res.json(db.publications)
-})
 
 // Posting new Author
-app.post("/addauthor",(req,res) => {
-    console.log(req.body);
-    db.authors.push(req.body);
-    return res.json(db.authors)
-})
+app.post("/addauthor",async (req,res) => {
+    try{
+        const {newAuthor} = req.body;
+        await authorModel.create(newAuthor);
+        return res.json({newAuthor});
+    }
+    catch(e){
+        res.status(500).json({e : e.Message});
+    }
+});
+
+// Posting new publication
+app.post("/addpublications",async (req,res) => {
+    try{
+        const {newPublication} = req.body;
+        await publicationModel.create(newPublication);
+        return res.json({newPublication});
+    }
+    catch(e){
+        res.status(500).json({e : e.Message});
+    }
+});
+
 
 
 //PUT
@@ -128,15 +169,13 @@ app.post("/addauthor",(req,res) => {
 // change details of book 
 // http://localhost:3000/updateBook/:isbn
 app.put("/updateBook/:isbn",(req,res) => {
-const {isbn} = req.params;
-db.books.forEach((book) => {
-    if(book.ISBN === isbn){
-        console.log({...book,...req.body})
-        return {...book,...req.body};
+    try{
+        const {updateBook} = req.params;
+        
     }
-    return book;
-})
-return res.json(db.books)
+    catch(e){
+        res.json("Failed");
+    }
 });
 
 // change details of Author 
@@ -243,6 +282,8 @@ app.delete("/publication-delete/:id", (req, res) => {
 });
 
 
-app.listen(3000, () => {
-    console.log("MY EXPRESS APP IS RUNNING.....")
-});
+app.listen(process.env.PORT || 3000,() =>
+ connectDB().then((data) =>
+ console.log("Server started successfully"))
+ .catch((error) => console.log(error))
+ );  
