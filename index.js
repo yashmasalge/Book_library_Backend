@@ -344,7 +344,7 @@ app.delete("/author-book-delete/:id/:isbn",async (req, res) => {
 });
 
 // http://localhost:3000/author-delete/1
-app.delete("/author-delete/:id", (req, res) => {
+app.delete("/author-delete/:id",async (req, res) => {
     // let {id} = req.params;
     // id = Number(id)
     // const filteredBooks = db.authors.filter((author) => author.id!==id);
@@ -367,7 +367,7 @@ app.delete("/author-delete/:id", (req, res) => {
 });
 
 // http://localhost:3000/publication-delete/1
-app.delete("/publication-delete/:id", (req, res) => {
+app.delete("/publication-delete/:id",async (req, res) => {
     // let {id} = req.params;
     // id = Number(id);
     // const filterPublications = db.publications.filter((public) => public.id !== id)
